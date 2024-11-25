@@ -1,3 +1,4 @@
+/*
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +9,7 @@ public class DataProgressEditor : EditorWindow
 {
     
     public ProgressData progressData;
+	
     [MenuItem("Window/Progress Data Editor")]
     static void Init() 
     {
@@ -67,5 +69,6 @@ public class DataProgressEditor : EditorWindow
 		progressData = new ProgressData();
 	}
 	
-
+	
 }
+*/

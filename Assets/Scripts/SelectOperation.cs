@@ -16,6 +16,12 @@ public class SelectOperation : MonoBehaviour
         Debug.Log("Operación seleccionada: CreateUser");
     }
 
+    public void SetUpdateUserOperation()
+    {
+        dbConn.SelectedOperation = OperationType.UpdateUser;
+        Debug.Log("Operación seleccionada: UpdateUser");
+    }
+
     public void SetDeleteUserOperation()
     {
         dbConn.SelectedOperation = OperationType.DeleteUser;

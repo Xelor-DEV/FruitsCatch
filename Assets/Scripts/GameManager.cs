@@ -7,7 +7,7 @@ public class GameManager : MonoBehaviour
     public Text scoreText;
     public Text timerText;
     public Text finalScore;
-    public Text lastFinalScore;
+    //public Text lastFinalScore;
 
     public GameObject gameOverPanel;
     public float timeLimit = 60f; // 1.5 minutos
@@ -19,6 +19,19 @@ public class GameManager : MonoBehaviour
 
     public ProgressData progress;
 
+    public DBConn dbConn;  // Referencia al script de conexión a la BD
+    public UserSessionData sessionData;  // Referencia al ScriptableObject con el userId
+    int userId;
+
+    private bool isGamePaused = false;  // Estado de la pausa
+    private bool isGameOver = false;   // Indica si el juego ha terminado
+
+    public void ReceiveUserId(string userID)
+    {
+        userId = int.Parse(userID);
+        Debug.Log("user id: " + userID);
+    }
+
     void Awake()
     {
         instance = this;
@@ -26,29 +39,38 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        ResumeGame();
         currentTime = timeLimit;
         score = 0;
         UpdateScoreText();
         gameOverPanel.SetActive(false);
-        LoadProgress();
+        //LoadProgress();
         lastScore = progress.score;
+        dbConn.SelectedOperation = OperationType.RecordScore;
+        isGameOver = false;  // Asegurarse de que no esté terminado al iniciar
     }
 
     void Update()
     {
-        currentTime -= Time.deltaTime;
-        timerText.text = "Time: " + Mathf.Max(0, currentTime).ToString("F2");
-
-        if (currentTime <= 0)
+        if (!isGamePaused) // Solo actualiza el juego si no está en pausa
         {
-            EndGame();
+            currentTime -= Time.deltaTime;
+            timerText.text = "Time: " + Mathf.Max(0, currentTime).ToString("F2");
+
+            if (currentTime <= 0)
+            {
+                EndGame();
+            }
         }
     }
 
     public void AddScore(int points)
     {
-        score += points;
-        UpdateScoreText();
+        if (!isGamePaused)  // Solo agregar puntos si el juego no está en pausa
+        {
+            score += points;
+            UpdateScoreText();
+        }
     }
 
     private void UpdateScoreText()
@@ -58,28 +80,40 @@ public class GameManager : MonoBehaviour
 
     public void LoseLife()
     {
-        lives--;
-        if (lives <= 0)
+        if (!isGamePaused)  // Solo restar vidas si el juego no está en pausa
         {
-            EndGame();
+            lives--;
+            if (lives <= 0)
+            {
+                EndGame();
+            }
         }
     }
 
-    private void EndGame()
+    public void EndGame()
     {
         // Lógica para terminar el juego
         gameOverPanel.SetActive(true);
         finalScore.text = "Score: " + score;
-        lastFinalScore.text = "Last Score: " + lastScore;
+        //lastFinalScore.text = "Last Score: " + lastScore;
         SaveProgress();
+        PauseGame();
+        Time.timeScale = 0;
+        isGameOver = true; // Marcar el juego como terminado
     }
 
     public void SaveProgress()
     {
         progress.score = score;
         string json = JsonUtility.ToJson(progress);
-        SaveData.Save("progress.json", json);
+        //SaveData.Save("progress.json", json);
         print("Data saved: " + progress.score + " points.");
+
+        if (sessionData != null)
+        {
+            dbConn.SendScoreToDatabase(score, userId);
+        }
+
     }
     public void LoadProgress()
     {
@@ -87,7 +121,24 @@ public class GameManager : MonoBehaviour
     }
     public void ResetGame()
     {
-        SceneManager.LoadScene("Game");
+        if (isGameOver == true)  // Solo permitir reiniciar si el juego ha terminado
+        {
+            SceneManager.LoadScene("Game");
+            ResumeGame();
+        }
+    }
+
+
+    private void PauseGame()
+    {
+        isGamePaused = true;    // Cambiar el estado a pausado
+        Time.timeScale = 0;     // Detener el tiempo del juego
+    }
+
+    private void ResumeGame()
+    {
+        isGamePaused = false;   // Cambiar el estado a no pausado
+        Time.timeScale = 1;     // Reanudar el tiempo del juego
     }
 }
 
