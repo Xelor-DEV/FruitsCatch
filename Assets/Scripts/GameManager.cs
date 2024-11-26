@@ -21,14 +21,13 @@ public class GameManager : MonoBehaviour
 
     public DBConn dbConn;  // Referencia al script de conexión a la BD
     public UserSessionData sessionData;  // Referencia al ScriptableObject con el userId
-    int userId;
 
     private bool isGamePaused = false;  // Estado de la pausa
     private bool isGameOver = false;   // Indica si el juego ha terminado
 
     public void ReceiveUserId(string userID)
     {
-        userId = int.Parse(userID);
+        sessionData.userId = int.Parse(userID);
         Debug.Log("user id: " + userID);
     }
 
@@ -111,7 +110,7 @@ public class GameManager : MonoBehaviour
 
         if (sessionData != null)
         {
-            dbConn.SendScoreToDatabase(score, userId);
+            dbConn.SendScoreToDatabase(score, sessionData.userId);
         }
 
     }
